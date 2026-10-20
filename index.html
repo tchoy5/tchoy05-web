@@ -1,0 +1,140 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Closest Meteorite Landings</title>
+  <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.11.13/lib/p5.min.js"></script>
+  <style>
+    body { margin: 0; }
+    #map { position: absolute; inset: 0; }
+    #map canvas.p5Canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 1;
+      mix-blend-mode: screen;
+    }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+const myMap = new maplibregl.Map({
+  container: 'map',
+  center: [-123.25, 49.26],
+  zoom: 2.5,
+  style: 'https://tiles.openfreemap.org/styles/fiord'
+});
+myMap.addControl(new maplibregl.NavigationControl());
+
+function latLngToPixel(lat, lng) { return myMap.project([lng, lat]); }
+function pixelToLatLng(x, y) {
+  const ll = myMap.unproject([x, y]);
+  return { lat: ll.lat, lng: ll.lng };
+}
+
+let meteorites;
+
+function preload() {
+  meteorites = loadTable('Meteorite_Landings.csv', 'csv', 'header');
+}
+
+function setup() {
+  const canvas = createCanvas(windowWidth, windowHeight);
+  canvas.parent('map');
+  myMap.on('move', () => redraw());
+  noLoop();
+}
+
+function symbolSize(massInGrams) {
+  return 2 + 38 * sqrt(massInGrams / 60000000);
+}
+
+function draw() {
+  clear();
+  blendMode(ADD);
+
+  const bounds = myMap.getBounds();
+  const centerX = width / 2;
+  const centerY = height / 2;
+
+  let closestPos = null;
+  let closestDistance = Infinity;
+
+  for (let i = 0; i < meteorites.getRowCount(); i++) {
+    const lat = meteorites.getNum(i, 'reclat');
+    const lng = meteorites.getNum(i, 'reclong');
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+    if (!bounds.contains([lng, lat])) continue;
+
+    const pos = latLngToPixel(lat, lng);
+    const distance = dist(centerX, centerY, pos.x, pos.y);
+
+    if (distance < closestDistance) {
+      closestDistance = distance;
+      closestPos = pos;
+    }
+
+    const size = symbolSize(meteorites.getNum(i, 'mass (g)'));
+
+    if (meteorites.getString(i, 'fall') === 'Fell') {
+      noFill();
+      stroke(255, 200, 80);
+      strokeWeight(1.5);
+      ellipse(pos.x, pos.y, size + 4, size + 4);
+    } else {
+      noStroke();
+      fill(254, 132, 203, 70);
+      triangle(pos.x, pos.y - (size / 2),
+    pos.x - (size / 2), pos.y + (size / 2),
+    pos.x + (size / 2), pos.y + (size / 2) );
+    }
+  }
+
+  if (closestPos !== null) {
+    blendMode(BLEND);
+    stroke(255);
+    strokeWeight(2);
+    line(centerX, centerY, closestPos.x, closestPos.y);
+
+    noFill();
+    ellipse(closestPos.x, closestPos.y, 12, 12);
+  }
+
+  blendMode(BLEND);
+  drawLegend();
+}
+
+function drawLegend() {
+  const x = 20, y = height - 70;
+  noStroke();
+  fill(0, 0, 0, 170);
+  rect(x - 10, y - 30, 340, 90, 6);
+  fill(255);
+  textSize(13);
+  text("Meteorites in NASA's catalogue (area follows mass)", x, y - 10);
+  noFill();
+  stroke(255, 200, 80);
+  strokeWeight(1.5);
+  ellipse(x + 8, y + 12, 12, 12);
+  noStroke();
+  fill(255);
+  text('seen falling ("Fell")', x + 24, y + 16);
+  fill(254, 132, 203, 70);
+  triangle(x + 8, y + 30, x + 2, y + 42, x + 14, y + 42);  
+  fill(255);
+  text('found later ("Found"); brighter where finds pile up', x + 24, y + 40);
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  redraw();
+}
+</script>
+</body>
+</html>
