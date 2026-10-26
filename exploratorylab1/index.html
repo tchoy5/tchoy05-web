@@ -1,1 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Cities With More Than 5 Million People</title>
+  <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.11.13/lib/p5.min.js"></script>
+  <style> body { margin: 0; } #map { position: absolute; inset: 0; } 
+    .legend {
+      position: absolute;
+      bottom: 30px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.5);
+      padding: 10px 14px;
+      border-radius: 6px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      font: 13px sans-serif;
+    }
+    .legend h4 { margin: 0 0 8px; font-size: 15px; }
+    .legend div { display: flex; align-items: center; margin: 4px 0; }
+    .legend span {
+      display: inline-block;
+      border-radius: 50%;
+      background: rgba(229, 195, 121, 1);
+      border: 1px solid rgba(215, 147, 115, 1);
+      margin-right: 8px;
+    }
+  </style>
 
+</head>
+
+<body>
+
+<div id="map"></div>
+  <div class="legend">
+    <h4>Population</h4>
+      <div><span style="width:10px; height:10px"></span> 5–10 million</div>
+      <div><span style="width:18px; height:18px"></span> 10–20 million</div>
+      <div><span style="width:28px; height:28px"></span> 20+ million</div>
+</div>
+
+  <script>
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: 'finalstylewithlines.json',        // the file you downloaded from Maputnik
+      center: [20.00, 30.00],    // longitude, latitude
+      zoom: 1.9
+    });
+    
+    map.addControl(new maplibregl.NavigationControl());
+
+  </script>
+
+
+</body>
+</html>
