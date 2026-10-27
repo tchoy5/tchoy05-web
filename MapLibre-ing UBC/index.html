@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta charset="utf-8">
+ <title>Parking Lots in UBC</title>
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@6.15.0/dist/maplibre-gl.css">
+ <style> body { margin: 0; } #map { position: absolute; inset: 0; } 
+     .map-box {
+      position: relative;
+      width: 800px;
+      height: 700px;
+    }
+    
+    #mapid {
+      width: 100%;
+      height: 100%;
+    }
+    
+    .legend {
+      position: absolute;
+      bottom: 30px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.5);
+      padding: 10px 14px;
+      border-radius: 6px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      font: 13px sans-serif;
+    }
+    .legend h4 { margin: 0 0 8px; font-size: 15px; }
+    .legend div { display: flex; align-items: center; margin: 4px 0; }
+    .legend span {
+      display: inline-block;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+ <!-- The web map will go in this div element. -->
+<div class="map-box">
+    <div id="mapid"></div>
+    
+    <div class="legend">
+      <h4>Payment Options</h4>
+      <div><span style="width:10px; height:10px; background-color: #35CEFF; opacity: 0.6;"></span> Uses Honk/PayByPhone/ZipBy</div>
+      <div><span style="width:10px; height:10px; background-color: #474747; opacity: 0.6;"></span> No Online Payment</div>
+    </div>
+  </div>
+
+
+ <script type="module">
+    import * as maplibregl
+    from 'https://cdn.jsdelivr.net/npm/maplibre-gl@6.15.0/dist/maplibre-gl.mjs'
+
+    const map = new maplibregl.Map({
+        container: 'mapid', // the id of the div above
+        center: [-123.25, 49.259], // [longitude, latitude]
+        zoom: 13.2,
+        style: 'https://tiles.openfreemap.org/styles/positron'
+    });
+    
+    window.map = map; // so that the console can find map
+
+    const url = 'https://raw.githubusercontent.com/UBCGeodata/ubcv-parking/refs/heads/master/geojson/ubcv_parking_www.geojson'
+    map.on('load', function () {
+        map.addSource('parking', {
+        type: 'geojson',
+        data: url,
+        attribution: 'Parking: UBC Campus Parking Lots, UBCGeodata'
+        });
+        map.addLayer({
+        id: 'parking-circles',
+        type: 'circle',
+        source: 'parking',
+        paint: ParkingPaint
+        });
+});
+    const ParkingPaint = {
+        'circle-radius': 4,
+        'circle-color': ['match', ['get', 'FAC_EQUIP2'],
+        'Honk/PayByPhone/ZipBy', '#35CEFF',
+        '#474747'],
+        'circle-opacity': 0.6
+    };
+
+
+
+
+
+    function onEachParking(e) {
+        const parking = e.features[0].properties;
+        if (parking.FAC_DESCRIPTION) {
+        const popup = new maplibregl.Popup();
+        popup.setLngLat(e.lngLat);
+        popup.setText(parking.FAC_DESCRIPTION);
+        popup.addTo(map);
+        }
+}
+
+    map.on('click', 'parking-circles', onEachParking);   
+
+ </script>
+</body>
+</html>
